@@ -40,7 +40,7 @@ jobs:
             -project Yuedu-Reader.xcodeproj \
             -scheme Yuedu-Reader \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-            -only-testing:"yuedu appTests" \
+            -skip-testing:"yuedu appUITests" \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Archive (unsigned)
