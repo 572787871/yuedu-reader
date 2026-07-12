@@ -41,6 +41,7 @@ jobs:
             -scheme Yuedu-Reader \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             -skip-testing:"yuedu appUITests" \
+            -resultBundlePath "${{ github.workspace }}/build/TestResults.xcresult" \
             CODE_SIGNING_ALLOWED=NO
         continue-on-error: true
         id: tests
@@ -49,6 +50,15 @@ jobs:
         if: always()
         run: |
           echo "Unit tests (yuedu appTests) ran; UITests runner is skipped (env bootstrap crash on runner)."
+
+      - name: Upload test results bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: TestResults-xcresult
+          path: build/TestResults.xcresult
+          if-no-files-found: warn
 
       - name: Archive (unsigned)
         env:
