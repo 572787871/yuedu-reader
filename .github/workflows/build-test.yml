@@ -29,7 +29,7 @@ jobs:
           xcodebuild build \
             -project Yuedu-Reader.xcodeproj \
             -scheme Yuedu-Reader \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             CODE_SIGNING_ALLOWED=NO
 
       - name: Run tests
@@ -39,5 +39,5 @@ jobs:
           xcodebuild test \
             -project Yuedu-Reader.xcodeproj \
             -scheme Yuedu-Reader \
-            -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+            -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
             CODE_SIGNING_ALLOWED=NO
