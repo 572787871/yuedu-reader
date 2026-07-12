@@ -5,7 +5,7 @@ import SwiftUI
 enum DSColor {
     // ── Brand ──
     /// Primary accent (buttons, links, selected state)
-    static let accent = Color.accentColor
+    static let accent = AppBrand.accent
     /// Success state
     static let success = Color.green
     /// Warning state
@@ -41,11 +41,11 @@ enum DSColor {
 
     // ── Functional ──
     /// Light label / selected background
-    static let accentLight = Color.blue.opacity(0.08)
+    static let accentLight = AppBrand.accent.opacity(0.08)
     /// Card shadow
     static let shadow = Color.black.opacity(0.05)
     /// Selected highlight
-    static let highlight = Color.blue.opacity(0.15)
+    static let highlight = AppBrand.accent.opacity(0.15)
 
     // ── Book Cover Gradient Palette ──
     static let coverGradients: [[Color]] = [
@@ -59,6 +59,17 @@ enum DSColor {
     // ── Search Engine Brand Colors ──
     static let brandBaidu = Color(red: 0.1, green: 0.4, blue: 0.9)
     static let brandBing = Color(red: 0.0, green: 0.5, blue: 0.7)
+}
+
+// MARK: - App Brand
+/// Central palette for the rebranded reader. Swap these two values to retheme
+/// the whole app, since `DSColor.accent`, the asset-catalog accent, and the
+/// reader-night accent all derive from here.
+enum AppBrand {
+    /// Warm reading-red accent used for controls, links, and selected states.
+    static let accent = Color(red: 0.878, green: 0.255, blue: 0.224)
+    /// Same accent as a `UIColor` for UIKit-backed views.
+    static let uiAccent = UIColor(red: 224 / 255, green: 65 / 255, blue: 57 / 255, alpha: 1)
 }
 
 // MARK: - Design System: Font Tokens

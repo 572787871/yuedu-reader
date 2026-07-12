@@ -1,7 +1,5 @@
 import Combine
-import FirebaseAuth
 import Foundation
-import GoogleSignIn
 import SwiftUI
 
 // MARK: - Reader Text Conversion
@@ -30,10 +28,12 @@ enum ReaderTheme: String, CaseIterable {
 
     private static let userDefaultsKey = "yd_reader_theme"
     private static let lastLightThemeKey = "lastLightTheme"
-    private static let weChatAccent = UIColor(red: 56 / 255, green: 151 / 255, blue: 241 / 255, alpha: 1)
-    private static let weChatDayBackground = UIColor(red: 244 / 255, green: 245 / 255, blue: 247 / 255, alpha: 1)
-    private static let weChatNightBackground = UIColor.black
-    private static let weChatNightBarBackground = UIColor(red: 26 / 255, green: 26 / 255, blue: 26 / 255, alpha: 1)
+    private static let readerAccent = AppBrand.uiAccent
+    // Soft paper background for day mode (warm off-white).
+    private static let dayBackground = UIColor(red: 250 / 255, green: 249 / 255, blue: 246 / 255, alpha: 1)
+    // Deep gray for night mode — never pure black.
+    private static let nightBackground = UIColor(red: 34 / 255, green: 34 / 255, blue: 36 / 255, alpha: 1)
+    private static let nightBarBackground = UIColor(red: 28 / 255, green: 28 / 255, blue: 30 / 255, alpha: 1)
 
     static func loadPersisted() -> ReaderTheme {
         let raw = UserDefaults.standard.string(forKey: userDefaultsKey) ?? ""
@@ -61,9 +61,9 @@ enum ReaderTheme: String, CaseIterable {
 
     var uiBackgroundColor: UIColor {
         switch self {
-        case .white: return Self.weChatDayBackground
+        case .white: return Self.dayBackground
         case .sepia: return UIColor(red: 244 / 255, green: 236 / 255, blue: 216 / 255, alpha: 1)
-        case .night: return Self.weChatNightBackground
+        case .night: return Self.nightBackground
         }
     }
 
@@ -76,7 +76,7 @@ enum ReaderTheme: String, CaseIterable {
     }
 
     var uiAccentColor: UIColor {
-        Self.weChatAccent
+        Self.readerAccent
     }
 
     var barColor: Color {
@@ -85,9 +85,9 @@ enum ReaderTheme: String, CaseIterable {
 
     var uiBarColor: UIColor {
         switch self {
-        case .white: return .white
+        case .white: return Self.dayBackground
         case .sepia: return UIColor(red: 0.93, green: 0.91, blue: 0.83, alpha: 1)
-        case .night: return Self.weChatNightBarBackground
+        case .night: return Self.nightBarBackground
         }
     }
 
@@ -228,48 +228,6 @@ func localized(_ key: String, bundle: Bundle = .main) -> String {
 class GlobalSettings: ObservableObject {
     static let shared = GlobalSettings()
 
-    // MARK: - Account State
-
-    @Published var isLoggedIn: Bool {
-        didSet { UserDefaults.standard.set(isLoggedIn, forKey: "yd_account_logged_in") }
-    }
-    @Published var accountDisplayName: String {
-        didSet { UserDefaults.standard.set(accountDisplayName, forKey: "yd_account_display_name") }
-    }
-    @Published var accountEmail: String {
-        didSet { UserDefaults.standard.set(accountEmail, forKey: "yd_account_email") }
-    }
-    @Published var accountProvider: String {
-        didSet { UserDefaults.standard.set(accountProvider, forKey: "yd_account_provider") }
-    }
-    @Published var accountUserIdentifier: String {
-        didSet { UserDefaults.standard.set(accountUserIdentifier, forKey: "yd_account_user_identifier") }
-    }
-    @Published var accountPhotoURL: String {
-        didSet { UserDefaults.standard.set(accountPhotoURL, forKey: "yd_account_photo_url") }
-    }
-
-    /// Subtitle shown under the account name. Prefers a real email, otherwise falls
-    /// back to a provider description so we never display an opaque identifier.
-    var accountSubtitle: String {
-        guard isLoggedIn else { return localized("登入後可同步進度") }
-        if !accountEmail.isEmpty { return accountEmail }
-        switch accountProvider {
-        case "Apple": return localized("透過 Apple 登入")
-        case "Google": return localized("透過 Google 登入")
-        default: return localized("已登入")
-        }
-    }
-    @Published var accountAvatarData: Data? {
-        didSet {
-            if let accountAvatarData {
-                UserDefaults.standard.set(accountAvatarData, forKey: "yd_account_avatar_data")
-            } else {
-                UserDefaults.standard.removeObject(forKey: "yd_account_avatar_data")
-            }
-        }
-    }
-
     @Published var textConversion: TextConversion {
         didSet { UserDefaults.standard.set(textConversion.rawValue, forKey: "yd_text_conv") }
     }
@@ -409,13 +367,6 @@ class GlobalSettings: ObservableObject {
 
     private init() {
         UserDefaults.standard.removeObject(forKey: "yd_app_lang")
-        isLoggedIn = UserDefaults.standard.bool(forKey: "yd_account_logged_in")
-        accountDisplayName = UserDefaults.standard.string(forKey: "yd_account_display_name") ?? ""
-        accountEmail = UserDefaults.standard.string(forKey: "yd_account_email") ?? ""
-        accountProvider = UserDefaults.standard.string(forKey: "yd_account_provider") ?? ""
-        accountUserIdentifier = UserDefaults.standard.string(forKey: "yd_account_user_identifier") ?? ""
-        accountPhotoURL = UserDefaults.standard.string(forKey: "yd_account_photo_url") ?? ""
-        accountAvatarData = UserDefaults.standard.data(forKey: "yd_account_avatar_data")
         let rawConv = UserDefaults.standard.string(forKey: "yd_text_conv") ?? ""
         textConversion = TextConversion(rawValue: rawConv) ?? .original
         readerFontBold = UserDefaults.standard.bool(forKey: "yd_reader_font_bold")
@@ -545,108 +496,6 @@ class GlobalSettings: ObservableObject {
         userFonts.removeAll { $0.id == font.id }
         if selectedReaderFontPostScript == font.postScriptName {
             selectedReaderFontPostScript = nil
-        }
-    }
-
-    func signIn(displayName: String, email: String, provider: String, userIdentifier: String = "") {
-        let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        let trimmedIdentifier = userIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
-        accountDisplayName = trimmedName.isEmpty ? trimmedEmail : trimmedName
-        accountEmail = trimmedEmail
-        accountProvider = provider
-        accountUserIdentifier = trimmedIdentifier
-        isLoggedIn = true
-    }
-
-    @MainActor
-    func applyFirebaseUser(_ user: User?, providerOverride: String? = nil) {
-        guard let user else {
-            clearAccountState()
-            return
-        }
-
-        let email = user.email ?? ""
-        let displayName = user.displayName?.trimmingCharacters(in: .whitespacesAndNewlines)
-        accountDisplayName = displayName?.isEmpty == false ? displayName! : (email.isEmpty ? localized("已登入") : email)
-        accountEmail = email
-        accountProvider = providerOverride ?? Self.providerDisplayName(from: user)
-        accountUserIdentifier = user.uid
-        accountPhotoURL = user.photoURL?.absoluteString ?? accountPhotoURL
-        isLoggedIn = true
-    }
-
-    @MainActor
-    func applyFirebaseProfile(_ profile: UserProfile) {
-        accountDisplayName = profile.displayName
-        accountEmail = profile.email
-        accountProvider = profile.provider
-        accountUserIdentifier = profile.uid
-        accountPhotoURL = profile.photoURL ?? ""
-        isLoggedIn = true
-        profile.preferences.apply(to: self)
-    }
-
-    func updateAccountAvatar(data: Data?) {
-        accountAvatarData = data
-    }
-
-    func updateAccountDisplayName(_ name: String) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        accountDisplayName = trimmed
-    }
-
-    func signOut(
-        revokeGoogleAccess: Bool = false,
-        completion: ((Error?) -> Void)? = nil
-    ) {
-        let provider = accountProvider
-
-        guard provider == "Google" else {
-            clearAccountState()
-            completion?(nil)
-            return
-        }
-
-        if revokeGoogleAccess {
-            GIDSignIn.sharedInstance.disconnect { [weak self] error in
-                if error != nil {
-                    GIDSignIn.sharedInstance.signOut()
-                }
-                DispatchQueue.main.async {
-                    self?.clearAccountState()
-                    completion?(error)
-                }
-            }
-            return
-        }
-
-        GIDSignIn.sharedInstance.signOut()
-        clearAccountState()
-        completion?(nil)
-    }
-
-    func clearAccountState() {
-        isLoggedIn = false
-        accountDisplayName = ""
-        accountEmail = ""
-        accountProvider = ""
-        accountUserIdentifier = ""
-        accountPhotoURL = ""
-        accountAvatarData = nil
-    }
-
-    private static func providerDisplayName(from user: User) -> String {
-        switch user.providerData.first?.providerID {
-        case "google.com":
-            return "Google"
-        case "apple.com":
-            return "Apple"
-        case "password":
-            return "Email"
-        default:
-            return user.providerData.first?.providerID ?? "Firebase"
         }
     }
 }

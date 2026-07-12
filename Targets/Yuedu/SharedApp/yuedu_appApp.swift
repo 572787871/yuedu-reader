@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct yuedu_appApp: App {
-    @UIApplicationDelegateAdaptor(RSSAppNotificationDelegate.self) private var rssNotificationDelegate
+    @UIApplicationDelegateAdaptor(AppOrientationDelegate.self) private var appOrientationDelegate
     @StateObject private var bookStore = BookStore()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -22,12 +22,8 @@ struct yuedu_appApp: App {
                         try? FileManager.default.removeItem(at: dir)
                     }
                     UserFontStorageManager.shared.registerAllOnLaunch()
-                    // Bind the book store before the auth listener fires, so the
-                    // first post-launch sync (triggered by the listener) sees it.
-                    FirestoreSyncManager.shared.bind(bookStore: bookStore)
                     ICloudSyncManager.shared.bind(bookStore: bookStore)
                     SharedImportQueueDrainer.shared.bind(bookStore: bookStore)
-                    _ = FirebaseAuthManager.shared
                     Task {
                         await WebFetcher.shared.setCloudflareChallengeHandler { url in
                             try await CloudflareChallengePresenter.present(url: url)

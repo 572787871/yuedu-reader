@@ -146,13 +146,13 @@ final class SharedImportQueueDrainer: ObservableObject {
             try await URLSession.shared.data(from: $0).0
         },
         importBookFile: ((URL) async throws -> Int)? = nil,
-        importOPMLData: @escaping (Data) throws -> Int = { data in
-            let sources = try RSSOPMLParser.parse(data: data)
-            return RSSStore.shared.addSourcesReturningAdded(sources).count
+        importOPMLData: @escaping (Data) throws -> Int = { _ in
+            // RSS subscription import was removed from this build.
+            0
         },
-        importLegadoRSSData: @escaping (Data) throws -> Int = { data in
-            let sources = try LegadoSourceJSONParser.parse(data: data)
-            return RSSStore.shared.addSourcesReturningAdded(sources).count
+        importLegadoRSSData: @escaping (Data) throws -> Int = { _ in
+            // RSS subscription import was removed from this build.
+            0
         },
         importReplaceRuleData: @escaping (Data) throws -> Int = {
             try ReplaceRuleStore.shared.importFromLegadoData($0)
@@ -302,9 +302,9 @@ final class SharedImportQueueDrainer: ObservableObject {
             let data = try Data(contentsOf: url)
             return .init(count: try importBookSources(data, fileExtension: ext), category: .bookSource)
         case .rssOPML:
-            return .init(count: try importOPMLData(Data(contentsOf: url)), category: .rss)
+            return .init(count: 0, category: .rss)
         case .rssLegadoJSON:
-            return .init(count: try importLegadoRSSData(Data(contentsOf: url)), category: .rss)
+            return .init(count: 0, category: .rss)
         case .replaceRules:
             return .init(count: try importReplaceRuleData(Data(contentsOf: url)), category: .replaceRule)
         case .localBook:
@@ -327,9 +327,9 @@ final class SharedImportQueueDrainer: ObservableObject {
         case .bookSource(let ext):
             return .init(count: try importBookSources(data, fileExtension: ext), category: .bookSource)
         case .rssOPML:
-            return .init(count: try importOPMLData(data), category: .rss)
+            return .init(count: 0, category: .rss)
         case .rssLegadoJSON:
-            return .init(count: try importLegadoRSSData(data), category: .rss)
+            return .init(count: 0, category: .rss)
         case .replaceRules:
             return .init(count: try importReplaceRuleData(data), category: .replaceRule)
         case .localBook(let ext):

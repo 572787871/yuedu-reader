@@ -647,7 +647,7 @@ struct BookRow: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, 7)
                 .padding(.vertical, 2)
-                .background(Color(red: 0.03, green: 0.31, blue: 0.58))
+                .background(DSColor.accent)
                 .clipShape(Capsule())
         } else if book.currentPosition >= 0.99 {
             Text(localized("已讀完"))

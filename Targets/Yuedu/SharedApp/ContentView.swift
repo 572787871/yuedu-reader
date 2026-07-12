@@ -3,13 +3,9 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject private var store: BookStore
     @ObservedObject private var gs = GlobalSettings.shared
-    @StateObject private var rssStore = RSSStore.shared
     @ObservedObject private var importDrainer = SharedImportQueueDrainer.shared
     @StateObject private var nowPlaying = NowPlayingHub.shared
 
-    private var rssUnreadCount: Int {
-        rssStore.totalUnreadCount()
-    }
 
     var body: some View {
         tabView
@@ -61,11 +57,6 @@ struct ContentView: View {
                     BrowserView()
                 }
 
-                Tab(localized("RSS 訂閱"), systemImage: "newspaper") {
-                    RSSListView()
-                }
-                .badge(rssUnreadCount > 0 ? Text("\(rssUnreadCount)") : nil)
-
                 Tab(localized("設定"), systemImage: "gearshape") {
                     SettingsView()
                 }
@@ -82,10 +73,6 @@ struct ContentView: View {
 
                 BrowserView()
                     .tabItem { Label(localized("探索"), systemImage: "safari") }
-
-                RSSListView()
-                    .tabItem { Label(localized("RSS 訂閱"), systemImage: "newspaper") }
-                    .badge(rssUnreadCount > 0 ? Text("\(rssUnreadCount)") : nil)
 
                 SettingsView()
                     .tabItem { Label(localized("設定"), systemImage: "gearshape") }

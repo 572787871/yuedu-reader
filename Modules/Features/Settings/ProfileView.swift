@@ -4,7 +4,6 @@ import UIKit
 struct SettingsView: View {
     @EnvironmentObject var store: BookStore
     @Environment(\.openURL) private var openURL
-    @ObservedObject private var gs = GlobalSettings.shared
     @State private var showSourceList = false
     @State private var showDownloadManager = false
     @State private var showReplaceRules = false
@@ -45,8 +44,21 @@ struct SettingsView: View {
         NavigationStack {
                 Form {
                     Section {
-                        NavigationLink(destination: UserDetailView()) {
-                            AccountRowContent()
+                        HStack(spacing: 15) {
+                            Image("YueduLogo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 50, height: 50)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(localized("閱讀"))
+                                    .font(.headline)
+                                Text(localized("本地書庫 · 進度自動保存"))
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
                         }
                     }
                     // ── App Language ──
@@ -192,23 +204,6 @@ struct SettingsView: View {
 
     private var downloadedBooksCount: Int {
         store.books.filter { $0.isOnline && $0.offlineDownloadState == .available }.count
-    }
-
-    @ViewBuilder func AccountRowContent() -> some View {
-        HStack(spacing: 15) {
-            AccountAvatarView(size: 50)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(gs.isLoggedIn ? (gs.accountDisplayName.isEmpty ? localized("已登入") : gs.accountDisplayName) : localized("尚未登入"))
-                    .font(.headline)
-                Text(gs.accountSubtitle)
-                    .font(.caption).foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-
-            Spacer()
-        }
     }
 
 }
