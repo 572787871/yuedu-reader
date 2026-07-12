@@ -60,20 +60,6 @@ jobs:
           path: build/TestResults.xcresult
           if-no-files-found: warn
 
-      - name: Extract crash diagnostics
-        if: always()
-        continue-on-error: true
-        run: |
-          set -x
-          mkdir -p build/diag
-          xcrun xcresulttool get --format json \
-            --result-bundle-path "${{ github.workspace }}/build/TestResults.xcresult" \
-            > build/diag/result.json 2>/dev/null || true
-          # Pull out IDE diagnostics (crash logs) if present.
-          find "${{ github.workspace }}/build/TestResults.xcresult" -name "*.json" -path "*Diagnostics*" \
-            -exec cp {} build/diag/ \;
-          ls -la build/diag || true
-
       - name: Archive (unsigned)
         env:
           IPHONEOS_DEPLOYMENT_TARGET: ""
