@@ -1051,6 +1051,21 @@ class BookStore: ObservableObject, BookProvider {
         return true
     }
 
+    /// Inserts a fully-formed `ReadingBook` into the library and persists it.
+    /// Used by tests and any caller that builds a book model directly rather
+    /// than going through an import path. Idempotent with respect to identity:
+    /// a book with an existing id is replaced in place.
+    @discardableResult
+    func addBook(_ book: ReadingBook) -> ReadingBook {
+        if let idx = books.firstIndex(where: { $0.id == book.id }) {
+            books[idx] = book
+        } else {
+            books.insert(book, at: 0)
+        }
+        saveMeta()
+        return book
+    }
+
     /// Download a remote cover (with source headers) and store it on the book.
     /// No-op when the URL is empty or the book already has a cover.
     func downloadCoverIfNeeded(bookId: UUID, coverUrl: String, sourceId: UUID?) {
