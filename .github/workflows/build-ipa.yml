@@ -66,10 +66,7 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath "${{ github.workspace }}/build/YueduReader.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            ENTITLEMENTS_REQUIRED=NO
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Package unsigned IPA
         run: |
@@ -83,7 +80,7 @@ jobs:
           mkdir -p Payload
           cp -R "$APP_PATH" Payload/
           
-          # Remove extensions to prevent app extension signature validation failures
+          # Remove extensions to prevent app extension signature validation failures on re-sign
           rm -rf Payload/YueduReader.app/PlugIns
 
           zip -r -y "$IPA_NAME" Payload
