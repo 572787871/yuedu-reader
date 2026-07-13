@@ -84,6 +84,10 @@ if [[ ! -s "$ENTITLEMENTS_PLIST" ]]; then
   echo "Error: extracted entitlements plist is empty. Check your provisioning profile." >&2
   exit 1
 fi
+
+# Make sure get-task-allow is removed or set to false to prevent launch issues with some side-loading methods.
+PlistBuddy -c "Set :get-task-allow false" "$ENTITLEMENTS_PLIST" 2>/dev/null || PlistBuddy -c "Add :get-task-allow bool false" "$ENTITLEMENTS_PLIST" 2>/dev/null || true
+
 echo "==> Entitlements extracted:"
 PlistBuddy -c "Print" "$ENTITLEMENTS_PLIST" 2>/dev/null || true
 
@@ -109,18 +113,22 @@ find "$APP" -type d \( -name '*.framework' \) | while read -r item; do
   codesign --force --timestamp=none --sign "$IDENTITY" "$item"
 done
 # 2) Sign app extensions with the same entitlements.
-for ext in "$APEX_DIR"/*.appex; do
-  [[ -d "$ext" ]] || continue
-  codesign --force --timestamp=none --sign "$IDENTITY" --entitlements "$ENTITLEMENTS_PLIST" "$ext"
-done
+if [ -d "$APEX_DIR" ]; then
+    for ext in "$APEX_DIR"/*.appex; do
+      [[ -d "$ext" ]] || continue
+      codesign --force --timestamp=none --sign "$IDENTITY" --entitlements "$ENTITLEMENTS_PLIST" "$ext"
+    done
+fi
 # 3) Sign the app itself with FULL entitlements from the provisioning profile.
 codesign --force --timestamp=none --sign "$IDENTITY" --entitlements "$ENTITLEMENTS_PLIST" "$APP"
 
 echo "==> Verifying signature"
 codesign --verify --strict --verbose=2 "$APP"
-for ext in "$APEX_DIR"/*.appex; do
-  codesign --verify --strict --verbose=1 "$ext" 2>&1 || true
-done
+if [ -d "$APEX_DIR" ]; then
+    for ext in "$APEX_DIR"/*.appex; do
+      codesign --verify --strict --verbose=1 "$ext" 2>&1 || true
+    done
+fi
 echo ""
 echo "==> Signed entitlements:"
 codesign -d --entitlements - "$APP" 2>&1 || true
